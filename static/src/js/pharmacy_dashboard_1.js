@@ -1,9 +1,8 @@
-/** @odoo-module */
+﻿/** @odoo-module */
 import { registry } from '@web/core/registry';
 import { useRef, onMounted } from "@odoo/owl";
 import { Component, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
-import { _t } from "@web/core/l10n/translation";
 import { user } from "@web/core/user";
 import { PharmacyOrderLines } from "./pharmacy_orderlines";
 import { reactive } from "@odoo/owl";
@@ -11,7 +10,6 @@ import { reactive } from "@odoo/owl";
 export class PharmacyDashboard extends Component {
 
     setup() {
-        super.setup(...arguments);
         this.patient_search = useRef('PatientSearch');
         this.patient_name = useRef('PatientName');
         this.patient_email = useRef('Email');
@@ -74,35 +72,23 @@ export class PharmacyDashboard extends Component {
 
     async loadInitialData() {
         try {
-            // Load currency
             const currency = await this.orm.call('hospital.pharmacy', 'company_currency', []);
             this.state.currency = currency || '$';
 
-            // Load medicines
             const domain = [['medicine_ok', '=', true]];
             const products = await this.orm.call('product.template', 'search_read', [domain]);
             this.state.product_lst = products;
 
-            // Load medicines data
             try {
                 this.state.med = await this.orm.call('product.template', 'action_get_medicine_data', []);
             } catch(e) {
                 this.state.med = products;
             }
 
-            // Load statistics
             await this._loadStats();
-
-            // Load stock alerts
             await this._loadStockAlerts();
-
-            // Load prescriptions data
             await this._loadPrescriptions();
-
-            // Load financial data
             await this._loadFinances();
-
-            // Load recent orders
             await this._loadOrders();
 
         } catch (error) {
@@ -196,7 +182,7 @@ export class PharmacyDashboard extends Component {
             return;
         }
         if (this.state.order_line.length === 0) {
-            alert("Veuillez ajouter au moins un médicament");
+            alert("Veuillez ajouter au moins un medicament");
             return;
         }
 
@@ -210,7 +196,7 @@ export class PharmacyDashboard extends Component {
 
         try {
             const result = await this.orm.call('hospital.pharmacy', 'create_sale_order', [data]);
-            alert('Commande créée ! Référence: ' + result.invoice);
+            alert('Commande creee ! Reference: ' + result.invoice);
             this.state.order_line = [];
             this.state.sub_total = 0;
             this.patient_name.el.value = '';
@@ -221,7 +207,7 @@ export class PharmacyDashboard extends Component {
             await this._loadOrders();
         } catch (error) {
             console.error('Erreur commande:', error);
-            alert('Erreur lors de la création de la commande');
+            alert('Erreur lors de la creation de la commande');
         }
     }
 
@@ -232,19 +218,13 @@ export class PharmacyDashboard extends Component {
         }
         try {
             const result = await this.orm.call('res.partner', 'action_get_patient_data', [[this.patient_search.el.value]]);
-            document.getElementById('patient-title').textContent = result.name || '—';
+            document.getElementById('patient-title').textContent = result.name || '-';
             document.getElementById('patient-code').textContent = result.unique || '-';
             document.getElementById('patient-age').textContent = result.dob || '-';
             document.getElementById('patient-blood').textContent = result.blood_group || '-';
             document.getElementById('patient-gender').textContent = result.gender || '-';
-            const img = document.getElementById('patient-image');
-            if (img) {
-                img.src = result.image_1920
-                    ? 'data:image/png;base64,' + result.image_1920
-                    : 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
-            }
         } catch (e) {
-            alert('Patient non trouvé');
+            alert('Patient non trouve');
         }
     }
 
@@ -260,105 +240,16 @@ export class PharmacyDashboard extends Component {
         if (this.patient_search.el) this.patient_search.el.value = '';
         ['patient-title', 'patient-code', 'patient-age', 'patient-blood', 'patient-gender'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.textContent = id === 'patient-title' ? '—' : '-';
+            if (el) el.textContent = '-';
         });
-        const img = document.getElementById('patient-image');
-        if (img) img.src = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
-    }
-
-    setMenu(menu) {
-        this.state.menu = menu;
-        // Chart initialization on home page
-        if (menu === 'home') {
-            setTimeout(() => this._initCharts(), 100);
-        }
-    }
-
-    getCurrentDateFormatted() {
-        const date = new Date();
-        const days = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
-        const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-        const dayName = days[date.getDay()];
-        const monthName = months[date.getMonth()];
-        return `${dayName.charAt(0).toUpperCase() + dayName.slice(1)} ${date.getDate()} ${monthName} ${date.getFullYear()}`;
     }
 
     logout() {
-        if (window.confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+        if (window.confirm('Etes-vous sur de vouloir vous deconnecter ?')) {
             window.location.href = '/web/session/logout';
         }
     }
-
-    _initCharts() {
-        // Verify Chart.js is available
-        if (typeof Chart === 'undefined') {
-            console.warn('Chart.js not loaded, skipping chart initialization');
-            return;
-        }
-
-        const ctx1 = document.getElementById('fluxChart');
-        const ctx2 = document.getElementById('stockChart');
-        
-        if (!ctx1 || !ctx2) {
-            console.warn('Chart containers not found');
-            return;
-        }
-        
-        // Destroy existing charts if any
-        if (window.fluxChartInstance) window.fluxChartInstance.destroy();
-        if (window.stockChartInstance) window.stockChartInstance.destroy();
-
-        // Line Chart - Évolution des Flux
-        window.fluxChartInstance = new Chart(ctx1, {
-            type: 'line',
-            data: {
-                labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
-                datasets: [
-                    {
-                        label: 'Entrées Stock',
-                        data: [3200, 5800, 9200, 4100, 5500, 3800, 4600],
-                        borderColor: '#5C3D5E',
-                        backgroundColor: 'rgba(92,61,94,0.07)',
-                        tension: 0.4, fill: true,
-                        pointBackgroundColor: '#5C3D5E',
-                        pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 4,
-                    },
-                    {
-                        label: 'Ventes',
-                        data: [1800, 3200, 4800, 5600, 5200, 4900, 4200],
-                        borderColor: '#0D9E8A',
-                        backgroundColor: 'rgba(13,158,138,0.07)',
-                        tension: 0.4, fill: true,
-                        pointBackgroundColor: '#0D9E8A',
-                        pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: 4,
-                    }
-                ]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { grid: { color: '#EDE8F2' }, ticks: { font: { size: 11 } } },
-                    x: { grid: { display: false } }
-                }
-            }
-        });
-
-        // Doughnut Chart - Répartition du Stock
-        window.stockChartInstance = new Chart(ctx2, {
-            type: 'doughnut',
-            data: {
-                labels: ['Médicaments Standard', 'Vaccins'],
-                datasets: [{ data: [75, 25], backgroundColor: ['#5C3D5E', '#0D9E8A'], borderWidth: 0, hoverOffset: 6 }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                cutout: '74%',
-                plugins: { legend: { display: false } }
-            }
-        });
-    }
-
+}
 
 PharmacyDashboard.template = "PharmacyDashboard";
 PharmacyDashboard.components = { PharmacyOrderLines };
