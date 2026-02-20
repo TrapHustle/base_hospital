@@ -244,6 +244,12 @@ export class PharmacyDashboard extends Component {
         });
     }
 
+    getCurrentDateFormatted() {
+        const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+        const date = new Date();
+        return date.toLocaleDateString('fr-FR', options);
+    }
+
     logout() {
         if (window.confirm('Etes-vous sur de vouloir vous deconnecter ?')) {
             window.location.href = '/web/session/logout';
