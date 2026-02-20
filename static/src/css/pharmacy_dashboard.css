@@ -1,6 +1,8 @@
 /* PharmaFlow Dashboard - Modern Design */
 
-*, *::before, *::after {
+.pf-dashboard, 
+.pf-dashboard *::before, 
+.pf-dashboard *::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -22,7 +24,7 @@
     --border:      #DDD6E2;
     --surface:     #F7F5F9;
     --white:       #FFFFFF;
-    --sidebar-w:   216px;
+    --sidebar-w:   70px;
 }
 
 .pf-dashboard {
@@ -31,10 +33,9 @@
     color: var(--ink);
     min-height: 100vh;
     display: flex;
-    margin-top: 55px;
+    margin-top: 46px;  /* ← 55 → 46 */
 }
 
-/* ─────────────── SIDEBAR ─────────────── */
 .sidebar {
     width: var(--sidebar-w);
     background: var(--white);
@@ -42,12 +43,11 @@
     display: flex;
     flex-direction: column;
     position: fixed;
-    top: 55px;
+    top: 46px;  /* ← 100 → 46 */
     left: 0;
     bottom: 0;
     z-index: 50;
 }
-
 .sidebar-logo {
     padding: 20px 18px 16px;
     border-bottom: 1px solid var(--border);
